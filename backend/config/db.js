@@ -2,14 +2,24 @@ import mongoose from 'mongoose';
 
 export const connectDB = async () => {
     try {
-        // Use environment variable or fallback to a local MongoDB URI
-        const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/farmmate';
-        const conn = await mongoose.connect(mongoURI);
-        console.log(`MongoDB Connected: ${conn.connection.host}`);
-    } catch (error){
-        console.error(`Error: ${error.message}`);
-        console.log('Note: Make sure MongoDB is running locally or set MONGO_URI environment variable');
-        // Don't exit the process, just log the error for development
-        console.log('Continuing without database connection for development...');
+        // Validate MONGODB_URI exists
+        if (!process.env.MONGODB_URI) {
+            throw new Error("MONGODB_URI is not defined. Please set it in your environment variables.");
+        }
+
+        console.log('\n🔌 Connecting to MongoDB Atlas...');
+        
+        const conn = await mongoose.connect(process.env.MONGODB_URI);
+        
+        console.log('✓ MongoDB Connected');
+        console.log(`Database: ${conn.connection.name}`);
+        console.log(`Host: ${conn.connection.host}\n`);
+        
+        return conn;
+    } catch (error) {
+        console.error('\n❌ MongoDB connection failed:');
+        console.error(`   ${error.message}\n`);
+        console.error('Server startup aborted.\n');
+        process.exit(1);
     }
-}
+};

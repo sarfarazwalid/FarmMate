@@ -32,8 +32,9 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const app = express();
-// Configure CORS — only allow the frontend on port 3000
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+
+// Configure CORS — only allow the frontend origin
+const corsOrigin = process.env.CORS_ORIGIN;
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -48,7 +49,7 @@ app.use(cors({
 const PORT = process.env.PORT || 5000;
 
 app.use(express.json()); // allows us to accept json data in the req.body.
-app.use(cookieParser()); // 2. Add this middleware after express.json()
+app.use(cookieParser()); // Add this middleware after express.json()
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -111,7 +112,7 @@ app.use((req, res) => {
     res.status(404).json({ success: false, msg: 'Endpoint not found' });
 });
 
-// M1: Centralized error handler — never expose stack traces to clients
+// Centralized error handler — never expose stack traces to clients
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
     res.status(err.status || 500).json({
@@ -120,15 +121,26 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log('Server running at http://localhost:'+PORT);
-    console.log('Static files served from: /uploads');
-    
-    // Validate API keys on startup
-    validateApiKeys();
-    
-    // Try to connect to database, but don't fail if it doesn't work
-    connectDB().catch(err => {
-        console.log('Database connection failed, but server is still running');
-    });
-});
+// Production-safe startup: connect to MongoDB first, then start Express
+const startServer = async () => {
+    try {
+        // Connect to MongoDB before starting server
+        await connectDB();
+        
+        // Validate API keys after DB connection
+        validateApiKeys();
+        
+        // Start Express server after successful DB connection
+        app.listen(PORT, () => {
+            console.log('\n🚀 Server started successfully');
+            console.log(`   Server running at http://localhost:${PORT}`);
+            console.log('   Static files served from: /uploads\n');
+        });
+    } catch (error) {
+        console.error('\n❌ Server startup failed:', error.message);
+        process.exit(1);
+    }
+};
+
+// Initialize server
+startServer();

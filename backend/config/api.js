@@ -14,12 +14,51 @@ export const getApiConfig = () => ({
 });
 
 export const validateApiKeys = () => {
-  const key = process.env.OPENROUTER_API_KEY;
-  if (!key) {
-    console.warn("⚠️  WARNING: OPENROUTER_API_KEY not properly configured!");
+  let hasErrors = false;
+
+  // Validate MongoDB URI
+  if (!process.env.MONGODB_URI) {
+    console.warn("⚠️  WARNING: MONGODB_URI is not configured!");
+    console.warn("   Please set MONGODB_URI in your .env file or environment variables");
+    console.warn("   Get your connection string from MongoDB Atlas: https://cloud.mongodb.com/");
+    hasErrors = true;
+  } else {
+    console.log("✅ MONGODB_URI is configured");
+  }
+
+  // Validate JWT Secret
+  if (!process.env.JWT_SECRET) {
+    console.warn("⚠️  WARNING: JWT_SECRET is not configured!");
+    console.warn("   Please set JWT_SECRET in your .env file or environment variables");
+    hasErrors = true;
+  } else {
+    console.log("✅ JWT_SECRET is configured");
+  }
+
+  // Validate Google AI API Key
+  if (!process.env.GOOGLE_AI_API_KEY && !process.env.GEMINI_API_KEY) {
+    console.warn("⚠️  WARNING: GOOGLE_AI_API_KEY is not configured!");
+    console.warn("   Please set GOOGLE_AI_API_KEY in your .env file or environment variables");
+    console.warn("   Get your API key from: https://makersuite.google.com/app/apikey");
+    hasErrors = true;
+  } else {
+    const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY;
+    console.log("✅ GOOGLE_AI_API_KEY is configured");
+  }
+
+  // Validate OpenRouter API Key
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.warn("⚠️  WARNING: OPENROUTER_API_KEY not configured!");
     console.warn("   Please set OPENROUTER_API_KEY in your .env file or environment variables");
     console.warn("   Get your API key from: https://openrouter.ai/keys");
+    hasErrors = true;
   } else {
     console.log("✅ OPENROUTER_API_KEY is configured");
+  }
+
+  if (hasErrors) {
+    console.warn("\n⚠️  Some API keys are missing. The application may not function correctly.\n");
+  } else {
+    console.log("\n✅ All API keys configured successfully.\n");
   }
 };
