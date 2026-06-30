@@ -1,8 +1,3 @@
-/**
- * FarmMate Landing Page — SaaS-Grade Redesign
- * Full-screen hero, floating dashboard preview, animated stats,
- * AI intelligence section, feature grid, step stepper, CTA
- */
 "use client";
 
 import {
@@ -31,8 +26,8 @@ import {
 import Link from 'next/link';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
+import { FeaturesModal, HowItWorksModal, AIModal, useHoverPreview, PreviewDropdown } from '@/app/components/NavbarModals';
 
-/* ─── Animation Variants ─── */
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (delay = 0) => ({
@@ -52,7 +47,7 @@ const staggerItem = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } },
 };
 
-/* ─── Section Wrapper ─── */
+
 function Section({ children, className = '' }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
@@ -69,7 +64,6 @@ function Section({ children, className = '' }) {
   );
 }
 
-/* ─── Animated Counter ─── */
 function AnimatedStat({ value, label, suffix = '' }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
@@ -104,7 +98,6 @@ function AnimatedStat({ value, label, suffix = '' }) {
   );
 }
 
-/* ─── Nav Link ─── */
 function NavLink({ href, children, className = '' }) {
   return (
     <Link href={href} className={`text-surface-300 hover:text-white transition-colors text-sm font-medium ${className}`}>
@@ -113,7 +106,6 @@ function NavLink({ href, children, className = '' }) {
   );
 }
 
-/* ─── Dashboard Preview Card ─── */
 function DashboardPreview() {
   return (
     <motion.div
@@ -127,7 +119,6 @@ function DashboardPreview() {
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
         className="relative z-10 glass-card rounded-3xl p-6 border border-white/[0.08] shadow-glow-lg"
       >
-        {/* Chart area */}
         <div className="bg-gradient-to-br from-emerald-600/30 to-emerald-800/30 rounded-2xl p-5 mb-4 border border-emerald-500/20">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-white">Smart Analytics</h3>
@@ -157,7 +148,6 @@ function DashboardPreview() {
           </div>
         </div>
 
-        {/* Mini cards grid */}
         <div className="grid grid-cols-2 gap-3">
           <div className="glass-card-light rounded-2xl p-3">
             <div className="w-7 h-7 bg-emerald-500/15 rounded-lg flex items-center justify-center mb-2">
@@ -176,22 +166,68 @@ function DashboardPreview() {
         </div>
       </motion.div>
 
-      {/* Decorative floating elements */}
       <motion.div
         animate={{ y: [0, -12, 0], rotate: [0, 5, 0] }}
         transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -top-3 -right-3 w-12 h-12 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex items-center justify-center backdrop-blur-sm"
+        className="absolute -top-3 -right-3 w-12 h-12 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex items-center justify-center backdrop-blur-sm z-20"
       >
         <Brain className="w-6 h-6 text-emerald-400" />
       </motion.div>
       <motion.div
         animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -bottom-2 -left-2 w-10 h-10 bg-amber-500/10 rounded-xl border border-amber-500/20 flex items-center justify-center backdrop-blur-sm"
+        className="absolute -bottom-2 -left-2 w-10 h-10 bg-amber-500/10 rounded-xl border border-amber-500/20 flex items-center justify-center backdrop-blur-sm z-20"
       >
         <Lightbulb className="w-5 h-5 text-amber-400" />
       </motion.div>
     </motion.div>
+  );
+}
+
+
+const navFeatures = [
+  { icon: Sprout, title: 'Smart Farm Management', desc: 'Manage crops, inventory, farm conditions, and operations.', color: 'from-emerald-500 to-emerald-600' },
+  { icon: Brain, title: 'AI Farming Assistant', desc: 'AI crop suggestions, pest detection, task prioritization, and recommendations.', color: 'from-emerald-400 to-teal-500' },
+  { icon: Store, title: 'Agricultural Marketplace', desc: 'Sell directly to buyers through the FarmMate marketplace.', color: 'from-amber-500 to-amber-600' },
+  { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Track revenue, sales, productivity, and farm performance.', color: 'from-purple-500 to-purple-600' },
+  { icon: Calendar, title: 'Planting Calendar', desc: 'Plan planting schedules and seasonal activities.', color: 'from-sky-500 to-sky-600' },
+  { icon: Users, title: 'Community & Q&A', desc: 'Collaborate with farmers and share knowledge.', color: 'from-blue-500 to-blue-600' },
+];
+
+const navHow = [
+  { icon: Users, title: 'Create Account', desc: 'Sign up as Farmer or Buyer.', color: 'from-emerald-400 to-emerald-600' },
+  { icon: Shield, title: 'Setup Profile', desc: 'Configure farm information or buyer profile.', color: 'from-teal-400 to-teal-600' },
+  { icon: Store, title: 'Buy & Sell', desc: 'Farmers list products. Buyers browse marketplace.', color: 'from-amber-400 to-amber-600' },
+  { icon: Brain, title: 'Use AI Tools', desc: 'Get crop suggestions, pest detection, and recommendations.', color: 'from-purple-500 to-purple-600' },
+  { icon: TrendingUp, title: 'Grow & Earn', desc: 'Increase productivity and marketplace success.', color: 'from-emerald-500 to-emerald-600' },
+];
+
+const navAi = [
+  { icon: TrendingUp, title: 'Crop Recommendation Engine', desc: 'Intelligent crop recommendations by soil, weather and market.', color: 'from-emerald-400 to-teal-400' },
+  { icon: Search, title: 'Pest Detection Assistant', desc: 'Identify potential pest problems through image analysis.', color: 'from-amber-400 to-orange-400' },
+  { icon: Lightbulb, title: 'Smart Task Prioritization', desc: 'Automatically ranks tasks by urgency and impact.', color: 'from-sky-400 to-blue-400' },
+  { icon: BarChart3, title: 'Product Image Generation', desc: 'Generates realistic product images for marketplace listings.', color: 'from-purple-500 to-purple-600' },
+  { icon: TrendingUp, title: 'Farm Insights', desc: 'Provides actionable farming recommendations powered by AI.', color: 'from-teal-400 to-teal-600' },
+];
+
+function NavHoverButton({ label, onClick, items }) {
+  return <DesktopNavHover label={label} onClick={onClick} items={items} />;
+}
+
+function DesktopNavHover({ label, onClick, items }) {
+  const { open, openPreview, closePreview } = useHoverPreview();
+  return (
+    <div className="relative inline-block" onMouseEnter={openPreview} onMouseLeave={closePreview}>
+      <button
+        onClick={() => onClick()}
+        className="text-surface-300 hover:text-white transition-colors text-sm font-medium"
+      >
+        {label}
+      </button>
+      <AnimatePresence>
+        {open && <PreviewDropdown items={items} onOpen={onClick} />}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -240,6 +276,9 @@ function FeatureCard({ icon: Icon, title, description, items, color = 'emerald' 
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
+  const [featuresOpen, setFeaturesOpen] = useState(false);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   useEffect(() => setMounted(true), []);
 
   if (!mounted) return null;
@@ -262,9 +301,9 @@ export default function HomePage() {
             </span>
           </Link>
           <div className="hidden sm:flex items-center gap-6">
-            <NavLink href="#features">Features</NavLink>
-            <NavLink href="#how-it-works">How It Works</NavLink>
-            <NavLink href="#ai-intelligence">AI</NavLink>
+            <NavHoverButton label="Features" onClick={() => setFeaturesOpen(true)} items={navFeatures} />
+            <NavHoverButton label="How It Works" onClick={() => setHowItWorksOpen(true)} items={navHow} />
+            <NavHoverButton label="AI" onClick={() => setAiOpen(true)} items={navAi} />
             <Link href="/login" className="text-surface-300 hover:text-white transition-colors text-sm font-medium">
               Login
             </Link>
@@ -601,6 +640,11 @@ export default function HomePage() {
         </div>
       </Section>
 
+      {/* ─── Modals ─── */}
+      <FeaturesModal isOpen={featuresOpen} onClose={() => setFeaturesOpen(false)} />
+      <HowItWorksModal isOpen={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
+      <AIModal isOpen={aiOpen} onClose={() => setAiOpen(false)} />
+
       {/* ─── CTA SECTION ─── */}
       <Section className="py-16 sm:py-24">
         <div className="container mx-auto px-4 sm:px-6">
@@ -654,7 +698,7 @@ export default function HomePage() {
             <div className="col-span-2 sm:col-span-1">
               <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                 <div className="w-7 h-7 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                  <Leaf className="w-4 h-4 text-white" />
+                  <Leaf className="w-4 w-4 text-white" />
                 </div>
                 <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">FarmMate</span>
               </div>
