@@ -33,6 +33,9 @@ dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const app = express();
 
+// Trust proxy so rate limiter sees real client IPs behind Render's reverse proxy
+app.set('trust proxy', 1);
+
 // Configure CORS — only allow the frontend origin
 const corsOrigin = process.env.CORS_ORIGIN;
 

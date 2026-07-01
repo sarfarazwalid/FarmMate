@@ -197,17 +197,20 @@ export const changePassword = async (req, res) => {
         user.password = await bcrypt.hash(newPassword, salt);
         await user.save();
 
-        res.status(200).json({ success: true, msg: "Password updated successfully." });
+        return res.status(200).json({ success: true, msg: "Password updated successfully." });
     } catch (error) {
         console.error("Error changing password:", error);
-        res.status(500).json({ success: false, msg: "Internal Server Error." });
+        return res.status(500).json({ success: false, msg: "Internal Server Error." });
     }
 };
 
 export const createUser = async (req, res) => {
+    console.log('[register] Request received:', { email: req.body?.email, userType: req.body?.userType });
+
     const user = req.body;
 
     if (!user || typeof user !== 'object') {
+        console.warn('[register] Invalid request payload');
         return res.status(400).json({ success: false, msg: 'Invalid request payload' });
     }
 
@@ -218,35 +221,58 @@ export const createUser = async (req, res) => {
     const userType = String(user.userType || '').trim();
 
     if (!email || !password || !name || !userType) {
+        console.warn('[register] Missing required fields');
         return res.status(400).json({ success: false, msg: 'Please provide all required fields.' });
     }
 
     if (!EMAIL_REGEX.test(email) || email.length > 254) {
+        console.warn('[register] Invalid email format:', email);
         return res.status(400).json({ success: false, msg: 'Please provide a valid email address.' });
     }
 
     if (name.length > 100) {
+        console.warn('[register] Name too long');
         return res.status(400).json({ success: false, msg: 'Name must be 100 characters or less.' });
     }
 
     if (password.length < 8) {
+        console.warn('[register] Password too short');
         return res.status(400).json({ success: false, msg: 'Password must be at least 8 characters long.' });
     }
 
     const role = ALLOWED_ROLES.includes(userType.toLowerCase()) ? userType.toLowerCase() : null;
     if (!role) {
+        console.warn('[register] Invalid user type:', userType);
         return res.status(400).json({ success: false, msg: 'Invalid user type. Must be farmer or buyer.' });
     }
 
     try {
+        // Step 1: Check if email exists
+        console.log('[register] Checking if email exists:', email);
         const emailExists = await checkUsernameExists(email);
         if (emailExists) {
+            console.log('[register] Email already exists:', email);
             return res.status(400).json({ success: false, msg: 'Email already exists.' });
         }
+        console.log('[register] Email is available');
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // Step 2: Hash password with timeout to prevent indefinite blocking
+        console.log('[register] Hashing password...');
+        const salt = await Promise.race([
+            bcrypt.genSalt(10),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Password hashing timeout')), 10000)
+            )
+        ]);
+        const hashedPassword = await Promise.race([
+            bcrypt.hash(password, salt),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Password hashing timeout')), 10000)
+            )
+        ]);
+        console.log('[register] Password hashed successfully');
 
+        // Step 3: Create and save user
         const userData = {
             email,
             password: hashedPassword,
@@ -255,11 +281,32 @@ export const createUser = async (req, res) => {
         };
 
         const newUser = new User(userData);
+        console.log('[register] Saving user to database...');
         await newUser.save();
-        res.status(201).json({ success: true, msg: 'User created successfully' });
+        console.log('[register] User saved successfully:', newUser._id);
+
+        // Step 4: Send response
+        return res.status(201).json({ success: true, msg: 'User created successfully' });
     } catch (err) {
-        console.error('Error in creating user:', err);
-        res.status(500).json({ success: false, msg: 'Internal Server Error' });
+        console.error('[register] Error in creating user:', err);
+
+        // Handle specific MongoDB errors
+        if (err.code === 11000) {
+            console.warn('[register] Duplicate key error for email:', email);
+            return res.status(400).json({ success: false, msg: 'Email already exists.' });
+        }
+
+        if (err.name === 'ValidationError') {
+            console.warn('[register] Validation error:', err.message);
+            return res.status(400).json({ success: false, msg: err.message || 'Invalid user data.' });
+        }
+
+        if (err.message && err.message.includes('timeout')) {
+            console.error('[register] Operation timeout:', err.message);
+            return res.status(504).json({ success: false, msg: 'Request timed out. Please try again.' });
+        }
+
+        return res.status(500).json({ success: false, msg: 'Internal Server Error' });
     }
 };
 
@@ -354,37 +401,53 @@ export const deleteUser = async (req, res) => {
 // In user.controller.js
 
 export const loginUser = async (req, res) => {
+    console.log('[login] Request received for email:', req.body?.email);
+
     const { email, password } = req.body;
 
     const normalizedEmail = String(email || '').trim().toLowerCase();
     const inputPassword = String(password || '');
 
     if (!normalizedEmail || !inputPassword) {
+        console.warn('[login] Missing email or password');
         return res.status(400).json({ success: false, msg: 'Please provide both email and password' });
     }
 
     if (!EMAIL_REGEX.test(normalizedEmail)) {
+        console.warn('[login] Invalid email format:', normalizedEmail);
         return res.status(400).json({ success: false, msg: 'Please provide a valid email address' });
     }
 
     try {
+        // Step 1: Find user
+        console.log('[login] Looking up user:', normalizedEmail);
         const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
+            console.log('[login] User not found:', normalizedEmail);
             return res.status(404).json({ success: false, msg: 'User not found' });
         }
+        console.log('[login] User found:', user._id);
 
-        // Compare input password with hashed password in the database
-        const isMatch = await bcrypt.compare(inputPassword, user.password);
+        // Step 2: Compare password with timeout
+        console.log('[login] Comparing password...');
+        const isMatch = await Promise.race([
+            bcrypt.compare(inputPassword, user.password),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Password comparison timeout')), 10000)
+            )
+        ]);
         if (!isMatch) {
+            console.log('[login] Invalid password for user:', user._id);
             return res.status(401).json({ success: false, msg: "Invalid password" });
         }
+        console.log('[login] Password verified');
 
-        // Create JWT token containing userId and role
+        // Step 3: Create JWT token
         let jwtSecret;
         try {
             jwtSecret = getJwtSecret();
         } catch (jwtError) {
-            console.error('JWT configuration error:', jwtError.message);
+            console.error('[login] JWT configuration error:', jwtError.message);
             return res.status(500).json({ success: false, msg: 'Server configuration error' });
         }
 
@@ -393,10 +456,9 @@ export const loginUser = async (req, res) => {
             jwtSecret,
             { expiresIn: '1h' }
         );
+        console.log('[login] JWT token created');
 
-        // Cookie options: use SameSite=None so cookies are sent on cross-site fetch requests from the frontend.
-        // Use secure cookies only in production. Local dev remains http and uses secure=false.
-        // Note: SameSite=None requires Secure=true in modern browsers, so use 'lax' for local dev
+        // Step 4: Set cookies
         const isProduction = process.env.NODE_ENV === 'production';
         const cookieOptions = {
             httpOnly: true,
@@ -406,15 +468,13 @@ export const loginUser = async (req, res) => {
             path: '/'
         };
 
-        // Set the JWT token in an httpOnly cookie
         res.cookie('token', token, cookieOptions);
-
-        // Expose a non-httpOnly userId cookie so client code can read the current user ID
         const userIdCookieOptions = { ...cookieOptions, httpOnly: false };
         res.cookie('userId', user._id, userIdCookieOptions);
+        console.log('[login] Cookies set successfully');
 
-        // If login is successful, respond back with user data
-        res.status(200).json({
+        // Step 5: Send response
+        return res.status(200).json({
             success: true,
             msg: "User logged in successfully",
             data: {
@@ -425,8 +485,14 @@ export const loginUser = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error("Error during login:", error.message);
-        res.status(500).json({ success: false, msg: "Internal Server Error" });
+        console.error('[login] Error during login:', error);
+
+        if (error.message && error.message.includes('timeout')) {
+            console.error('[login] Operation timeout:', error.message);
+            return res.status(504).json({ success: false, msg: 'Request timed out. Please try again.' });
+        }
+
+        return res.status(500).json({ success: false, msg: "Internal Server Error" });
     }
 };
 
