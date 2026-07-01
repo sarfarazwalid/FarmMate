@@ -2,6 +2,7 @@
 
 import { AlertCircle, Calendar, CheckCircle, Clock, FileDown, MapPin, Package, ShoppingBag, Truck, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getApiUrl } from '@/lib/apiConfig';
 
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -34,7 +35,7 @@ export default function MyOrdersPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/orders/user/${userId}`, {
+      const response = await fetch(getApiUrl(`/orders/user/${userId}`), {
         credentials: 'include'
       });
       if (response.ok) {

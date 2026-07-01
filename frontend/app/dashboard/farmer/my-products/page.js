@@ -4,6 +4,7 @@ import ConfirmDialog from '@/app/components/ConfirmDialog';
 import { useToast } from '@/app/components/ToastProvider';
 import { DollarSign, Edit, Eye, EyeOff, Package, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getApiUrl } from '@/lib/apiConfig';
 
 export default function MyProductsPage() {
   const [products, setProducts] = useState([]);
@@ -52,7 +53,7 @@ export default function MyProductsPage() {
 
   const fetchProducts = async (farmerId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/products/farmer/${farmerId}/own`, {
+      const response = await fetch(getApiUrl(`/products/farmer/${farmerId}/own`), {
         credentials: 'include'
       });
       const data = await response.json();
@@ -82,7 +83,7 @@ export default function MyProductsPage() {
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${selectedProduct._id}`, {
+      const response = await fetch(getApiUrl(`/products/${selectedProduct._id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -111,7 +112,7 @@ export default function MyProductsPage() {
 
   const handleToggleAvailability = async (productId, currentStatus) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${productId}/availability`, {
+      const response = await fetch(getApiUrl(`/products/${productId}/availability`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -134,7 +135,7 @@ export default function MyProductsPage() {
 
   const handleDeleteProduct = async (productId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+      const response = await fetch(getApiUrl(`/products/${productId}`), {
         method: 'DELETE',
         credentials: 'include'
       });

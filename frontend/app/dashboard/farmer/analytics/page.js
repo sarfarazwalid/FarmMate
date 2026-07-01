@@ -16,6 +16,7 @@ import {
 import { BarChart3, Loader2, TrendingDown, TrendingUp } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Bar, Doughnut } from 'react-chartjs-2';
+import { getApiUrl } from '@/lib/apiConfig';
 
 ChartJS.register(
   CategoryScale,
@@ -108,9 +109,9 @@ export default function AnalyticsPage() {
       try {
         setDataLoading(true);
         const [farmsRes, cropsRes, ordersRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/farms/farmer/${uid}`, { credentials: 'include' }),
-          fetch(`http://localhost:5000/api/crops/farmer/${uid}`, { credentials: 'include' }),
-          fetch(`http://localhost:5000/api/orders/farmer/${uid}?status=delivered`, { credentials: 'include' })
+          fetch(getApiUrl(`/farms/farmer/${uid}`), { credentials: 'include' }),
+          fetch(getApiUrl(`/crops/farmer/${uid}`), { credentials: 'include' }),
+          fetch(getApiUrl(`/orders/farmer/${uid}?status=delivered`), { credentials: 'include' })
         ]);
 
         if (!farmsRes.ok) {

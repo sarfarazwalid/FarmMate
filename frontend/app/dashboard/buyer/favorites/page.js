@@ -2,6 +2,7 @@
 
 import { Heart, MapPin, Plus, Search, Star, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getApiUrl } from '@/lib/apiConfig';
 
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState([]);
@@ -31,7 +32,7 @@ export default function FavoritesPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/users/${userId}/favorites`, {
+      const response = await fetch(getApiUrl(`/users/${userId}/favorites`), {
         credentials: 'include'
       });
       if (response.ok) {
@@ -58,7 +59,7 @@ export default function FavoritesPage() {
       const userId = cookies.userId;
       if (!userId) return;
 
-      const response = await fetch(`http://localhost:5000/api/cart/${userId}`, {
+      const response = await fetch(getApiUrl(`/cart/${userId}`), {
         credentials: 'include'
       });
       if (response.ok) {
@@ -87,7 +88,7 @@ export default function FavoritesPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/cart/${userId}/add`, {
+      const response = await fetch(getApiUrl(`/cart/${userId}/add`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +133,7 @@ export default function FavoritesPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/users/${userId}/favorites/${productId}`, {
+      const response = await fetch(getApiUrl(`/users/${userId}/favorites/${productId}`), {
         method: 'DELETE',
         credentials: 'include'
       });

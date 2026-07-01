@@ -16,6 +16,7 @@ import {
     XCircle
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { getApiUrl } from '@/lib/apiConfig';
 
 export default function FarmerOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -41,8 +42,8 @@ export default function FarmerOrdersPage() {
 
       // Fetch farmer's orders
       const url = selectedStatus === 'all' 
-        ? `http://localhost:5000/api/orders/farmer/${userId}`
-        : `http://localhost:5000/api/orders/farmer/${userId}?status=${selectedStatus}`;
+        ? getApiUrl(`/orders/farmer/${userId}`)
+        : getApiUrl(`/orders/farmer/${userId}?status=${selectedStatus}`);
 
       const response = await fetch(url, {
         credentials: 'include'
@@ -68,7 +69,7 @@ export default function FarmerOrdersPage() {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       setUpdatingStatus(orderId);
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+      const response = await fetch(getApiUrl(`/orders/${orderId}/status`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'

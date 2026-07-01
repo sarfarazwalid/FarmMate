@@ -4,6 +4,7 @@ import { useToast } from "@/app/components/ToastProvider";
 import Button from '@/app/components/ui/Button';
 import { Check, CheckCircle, Clock, Edit, MessageCircle, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getApiUrl } from '@/lib/apiConfig';
 
 export default function QAPage() {
   const [questions, setQuestions] = useState([]);
@@ -32,7 +33,7 @@ export default function QAPage() {
 
   const fetchQuestions = async () => {
     setLoading(true);
-    const res = await fetch("http://localhost:5000/api/qa/farmer", { credentials: "include" });
+    const res = await fetch(getApiUrl("/qa/farmer"), { credentials: "include" });
     const data = await res.json();
     if (data.success) setQuestions(data.data);
     setLoading(false);
@@ -42,7 +43,7 @@ export default function QAPage() {
     e.preventDefault();
     if (!newQuestion.trim()) return;
     setAsking(true);
-    const res = await fetch("http://localhost:5000/api/qa/ask", {
+    const res = await fetch(getApiUrl("/qa/ask"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -59,7 +60,7 @@ export default function QAPage() {
   };
 
   const handleEditQuestion = async (questionId, updatedQuestion) => {
-    const res = await fetch(`http://localhost:5000/api/qa/${questionId}`, {
+    const res = await fetch(getApiUrl(`/qa/${questionId}`), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -76,7 +77,7 @@ export default function QAPage() {
 
   const handleDeleteQuestion = async (questionId) => {
     setDeleting({ ...deleting, [questionId]: true });
-    const res = await fetch(`http://localhost:5000/api/qa/${questionId}`, {
+    const res = await fetch(getApiUrl(`/qa/${questionId}`), {
       method: "DELETE",
       credentials: "include",
     });

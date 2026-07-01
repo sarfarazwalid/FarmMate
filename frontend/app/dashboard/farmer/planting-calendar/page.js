@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, Sprout, Filter 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getApiUrl } from '@/lib/apiConfig';
 
 const stagger = {
   hidden: {},
@@ -178,7 +179,7 @@ export default function PlantingCalendarPage() {
 
   const fetchTimeline = useCallback(async (cropId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/crops/${cropId}/timeline`, { credentials: 'include' });
+      const res = await fetch(getApiUrl(`/crops/${cropId}/timeline`), { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
         setTimeline(data.data);
@@ -194,7 +195,7 @@ export default function PlantingCalendarPage() {
 
   const fetchFarms = async (farmerId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/farms/farmer/${farmerId}`, { credentials: 'include' });
+      const res = await fetch(getApiUrl(`/farms/farmer/${farmerId}`), { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
         setFarms(data.data);
@@ -207,7 +208,7 @@ export default function PlantingCalendarPage() {
 
   const fetchCrops = async (farmerId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/crops/farmer/${farmerId}`, { credentials: 'include' });
+      const res = await fetch(getApiUrl(`/crops/farmer/${farmerId}`), { credentials: 'include' });
       const data = await res.json();
       if (data.success) setCrops(data.data);
     } catch (e) {
@@ -217,7 +218,7 @@ export default function PlantingCalendarPage() {
 
   const toggleComplete = async (index) => {
     const current = timeline[index];
-    const res = await fetch(`http://localhost:5000/api/crops/${selectedCropId}/timeline/${index}`, {
+    const res = await fetch(getApiUrl(`/crops/${selectedCropId}/timeline/${index}`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -228,7 +229,7 @@ export default function PlantingCalendarPage() {
   };
 
   const deleteItem = async (index) => {
-    const res = await fetch(`http://localhost:5000/api/crops/${selectedCropId}/timeline/${index}`, {
+    const res = await fetch(getApiUrl(`/crops/${selectedCropId}/timeline/${index}`), {
       method: 'DELETE',
       credentials: 'include'
     });
