@@ -3,11 +3,14 @@ import User from "../models/user.model.js";
 import mongoose from "mongoose";
 
 export const getFarms = async (req, res) => {
+    console.log('[farms] getFarms called');
+    
     try {
         const farms = await Farm.find({}).populate('farmer', 'name email');
+        console.log(`[farms] Found ${farms.length} farms`);
         res.status(200).json({success: true, data: farms});
     } catch (err) {
-        console.log("error in fetching farms", err.message);
+        console.error('[farms] Error fetching farms:', err.message);
         res.status(500).json({success: false, message: "Server error"});
     }
 }

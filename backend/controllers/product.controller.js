@@ -14,6 +14,8 @@ const sanitizeOptionalImage = (image) => typeof image === 'string' && image.trim
 export const getAllProducts = async (req, res) => {
     const { category } = req.query;
     
+    console.log(`[products] getAllProducts called - category: ${category || 'all'}`);
+    
     try {
         let query = { isAvailable: true, isInMarketplace: true };
         
@@ -26,12 +28,13 @@ export const getAllProducts = async (req, res) => {
             .populate('farmer', 'name')
             .populate('farm', 'name');
         
+        console.log(`[products] Found ${products.length} products`);
         res.status(200).json({
             success: true,
             data: products
         });
     } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('[products] Error fetching products:', error);
         res.status(500).json({ success: false, msg: 'Internal Server Error' });
     }
 };
@@ -39,6 +42,8 @@ export const getAllProducts = async (req, res) => {
 // Get marketplace products (only products available in marketplace)
 export const getMarketplaceProducts = async (req, res) => {
     const { category, organic, delivery } = req.query;
+    
+    console.log(`[products] getMarketplaceProducts called - filters:`, { category, organic, delivery });
     
     try {
         let query = { 
@@ -64,12 +69,13 @@ export const getMarketplaceProducts = async (req, res) => {
             .populate('farmer', 'name')
             .populate('farm', 'name location');
         
+        console.log(`[products] Found ${products.length} marketplace products`);
         res.status(200).json({
             success: true,
             data: products
         });
     } catch (error) {
-        console.error('Error fetching marketplace products:', error);
+        console.error('[products] Error fetching marketplace products:', error);
         res.status(500).json({ success: false, msg: 'Internal Server Error' });
     }
 };

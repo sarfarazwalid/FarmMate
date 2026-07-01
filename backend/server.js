@@ -36,14 +36,29 @@ const app = express();
 // Trust proxy so rate limiter sees real client IPs behind Render's reverse proxy
 app.set('trust proxy', 1);
 
-// Configure CORS — only allow the frontend origin
-const corsOrigin = process.env.CORS_ORIGIN;
+// Configure CORS — allow multiple origins for local and production
+const corsOrigin = process.env.CORS_ORIGIN || '';
+const corsOriginProd = process.env.CORS_ORIGIN_PROD || '';
+const allowedOrigins = [
+    ...corsOrigin.split(',').map(o => o.trim()).filter(Boolean),
+    ...corsOriginProd.split(',').map(o => o.trim()).filter(Boolean)
+];
 
 app.use(cors({
     origin: (origin, callback) => {
         // Allow non-browser requests (curl, server-side) when origin is undefined
         if (!origin) return callback(null, true);
-        if (origin === corsOrigin) return callback(null, true);
+        
+        // Check if origin is in allowed list
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        
+        // In production, also allow any https://*.vercel.app domain
+        if (process.env.NODE_ENV === 'production' && origin.endsWith('.vercel.app')) {
+            return callback(null, true);
+        }
+        
         return callback(new Error('Not allowed by CORS'));
     },
     credentials: true
@@ -53,6 +68,16 @@ const PORT = process.env.PORT || 5000;
 
 app.use(express.json()); // allows us to accept json data in the req.body.
 app.use(cookieParser()); // Add this middleware after express.json()
+
+// Request logging middleware for debugging
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`[http] ${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
+    });
+    next();
+});
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
